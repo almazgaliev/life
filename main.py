@@ -7,18 +7,23 @@ from random import randint, choice
 
 
 class Game:
-    def __init__(self, field=np.zeros((20, 20, 3), dtype=np.uint8)):
+    def __init__(self,
+                 field=np.zeros((20, 20, 3), dtype=np.uint8),
+                 rules=None):
         # проверяет нужно ли завершить игру
         self.finish = False
         # готовит окна
         self.fig, self.ax = plt.subplots()
         self.fig.suptitle("Life")
 
-        # * self.transition[x, y]
-        # * where x is value of cell
-        # * and y is neighbour
+        # * self.transition[i, j]
+        # * where i is value of cell
+        # * and j is number of neighbours
         self.transitions = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0],
                                      [0, 0, 1, 1, 0, 0, 0, 0, 0]])
+
+        if rules is not None:
+            self.transitions = rules
         # Обработчик на клик мышкой
         self.fig.canvas.mpl_connect('button_press_event', self.onclick)
         # cid = self.fig.canvas.mpl_connect('button_press_event', self.onclick)
@@ -43,6 +48,7 @@ class Game:
                                  frames=self.end_game,
                                  blit=True,
                                  interval=20)
+        plt.axis('off')
         plt.show()
 
     # остановит игру
@@ -59,7 +65,6 @@ class Game:
     # функция отрисовки
     def update(self, par):
         buffer = np.zeros(self.frame.shape, dtype=np.uint8)
-
         x_, y_ = self.alive_buffer_coord
         xm = x_-1
         ym = y_-1
@@ -74,7 +79,7 @@ class Game:
         self.im.set_array(self.frame)
         return self.im,
 
-    # функция выстрела
+    # TODO drawing
     def onclick(self, event):
         x, y = round(event.xdata), round(event.ydata)
         print(x, y)
@@ -82,41 +87,49 @@ class Game:
         # Если кликнули ...
 
 
-pink = (255, 56, 152)
-cyan = (0, 255, 255)
-green = (69, 228, 69)
-purple = (201, 22, 255)
-red = (255, 30, 30)
+if __name__ == "__main__":
+    pink = (255, 56, 152)
+    cyan = (0, 255, 255)
+    green = (69, 228, 69)
+    purple = (201, 22, 255)
+    red = (255, 30, 30)
 
-size = (500, 500)
-field = np.zeros(size, dtype=np.uint8)
+    size = (600, 600)
+    field = np.zeros(size, dtype=np.uint8)
 
-edem0 = np.ones((2, 2))
-osciilator1 = np.ones((4, 4))
-osciilator1[2:, 2:] -= edem0
-osciilator1[:2, :2] -= edem0
-glider0 = np.array([[1, 1, 1], [0, 0, 1], [0, 1, 0]])
-heavy_spaceship0 = np.array([[0, 0, 1, 1, 0],
-                             [1, 1, 0, 1, 1],
-                             [1, 1, 1, 1, 0],
-                             [0, 1, 1, 0, 0]])
-heavy_spaceship1 = np.array([[0, 0, 0, 1, 1, 0],
-                             [1, 1, 1, 0, 1, 1],
-                             [1, 1, 1, 1, 1, 0],
-                             [0, 1, 1, 1, 0, 0]])
-osciilator0 = np.array([[1, 1, 1]])
-seed = np.array([[0, 1, 0], [1, 1, 1], [1, 0, 1], [0, 1, 0]])
+    edem0 = np.ones((2, 2))
 
-figures = [edem0, glider0, osciilator0, osciilator1,
-           seed, heavy_spaceship0, heavy_spaceship1]
-for i in range(220):
-    figure = choice(figures)
-    figure = np.rot90(figure, k=randint(0, 4))
-    x, y = randint(0, size[0]), randint(0, size[1])
-    try:
-        field[x:x+figure.shape[0], y:y+figure.shape[1]] = figure
-    finally:
-        continue
+    osciilator1 = np.ones((4, 4))
+    osciilator1[2:, 2:] -= edem0
+    osciilator1[:2, :2] -= edem0
 
-# field = np.random.randint(0, high=2, size=size)
-gg = Game(field)
+    glider0 = np.array([[1, 1, 1], [0, 0, 1], [0, 1, 0]])
+
+    heavy_spaceship0 = np.array([[0, 0, 1, 1, 0],
+                                [1, 1, 0, 1, 1],
+                                [1, 1, 1, 1, 0],
+                                [0, 1, 1, 0, 0]])
+
+    heavy_spaceship1 = np.array([[0, 0, 0, 1, 1, 0],
+                                [1, 1, 1, 0, 1, 1],
+                                [1, 1, 1, 1, 1, 0],
+                                [0, 1, 1, 1, 0, 0]])
+
+    osciilator0 = np.array([[1, 1, 1]])
+
+    seed = np.array([[0, 1, 0], [1, 1, 1], [1, 0, 1], [0, 1, 0]])
+
+    figures = [edem0, glider0, osciilator0, osciilator1,
+               seed, heavy_spaceship0, heavy_spaceship1]
+
+    for i in range(920):
+        figure = choice(figures)
+        figure = np.rot90(figure, k=randint(0, 4))
+        x, y = randint(0, size[0]), randint(0, size[1])
+        try:
+            field[x:x+figure.shape[0], y:y+figure.shape[1]] = figure
+        finally:
+            continue
+
+    # field = np.random.randint(0, high=2, size=size)
+    gg = Game(field)
