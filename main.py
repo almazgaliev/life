@@ -3,9 +3,24 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from random import randint, choice
 
+
+def update(frame, alive_buffer_coord, transitions):
+    buffer = np.zeros(frame.shape, dtype=np.uint8)
+    x_, y_ = alive_buffer_coord
+    xm = x_-1
+    ym = y_-1
+    xp = (x_+1) % frame.shape[0]
+    yp = (y_+1) % frame.shape[1]
+    x_ = [xm, x_, xp, xm, xp, xm, x_, xp]
+    y_ = [ym, ym, ym, y_, y_, yp, yp, yp]
+    for x, y in zip(x_, y_):
+        buffer[x, y] += 1
+    frame = transitions[frame, buffer]
+    alive_buffer_coord = np.where(frame == 1)
+    return frame, alive_buffer_coord
+
+
 # класс игры
-
-
 class Game:
     def __init__(self,
                  field=np.zeros((20, 20, 3), dtype=np.uint8),
@@ -26,7 +41,6 @@ class Game:
             self.transitions = rules
         # Обработчик на клик мышкой
         self.fig.canvas.mpl_connect('button_press_event', self.onclick)
-        # cid = self.fig.canvas.mpl_connect('button_press_event', self.onclick)
 
         # подготовка изображения-массива
         self.frame = field
@@ -63,20 +77,10 @@ class Game:
         return self.im,
 
     # функция отрисовки
-    def update(self, par):
-        buffer = np.zeros(self.frame.shape, dtype=np.uint8)
-        x_, y_ = self.alive_buffer_coord
-        xm = x_-1
-        ym = y_-1
-        xp = (x_+1) % self.frame.shape[0]
-        yp = (y_+1) % self.frame.shape[1]
-        x_ = [xm, x_, xp, xm, xp, xm, x_, xp]
-        y_ = [ym, ym, ym, y_, y_, yp, yp, yp]
-        for x, y in zip(x_, y_):
-            buffer[x, y] += 1
-        self.frame = self.transitions[self.frame, buffer]
-        self.alive_buffer_coord = np.where(self.frame == 1)
-        self.im.set_array(self.frame)
+    def update(self, param):
+        self.frame, self.alive_buffer_coord = update(
+            self.frame, self.alive_buffer_coord, self.transitions)
+        self.im.set_data(self.frame)
         return self.im,
 
     # TODO drawing
@@ -88,36 +92,32 @@ class Game:
 
 
 if __name__ == "__main__":
-    pink = (255, 56, 152)
-    cyan = (0, 255, 255)
-    green = (69, 228, 69)
-    purple = (201, 22, 255)
-    red = (255, 30, 30)
-
-    size = (600, 600)
+    size = (600, 600)  # размер поля
     field = np.zeros(size, dtype=np.uint8)
 
-    edem0 = np.ones((2, 2))
+    # генерация всяких живых фигур
+    edem0 = np.ones((2, 2))  # сад эдема
 
-    osciilator1 = np.ones((4, 4))
+    osciilator1 = np.ones((4, 4))  # осцилятор с частотой 2 тика
     osciilator1[2:, 2:] -= edem0
     osciilator1[:2, :2] -= edem0
 
-    glider0 = np.array([[1, 1, 1], [0, 0, 1], [0, 1, 0]])
+    glider0 = np.array([[1, 1, 1], [0, 0, 1], [0, 1, 0]])  # glider 1
 
-    heavy_spaceship0 = np.array([[0, 0, 1, 1, 0],
+    heavy_spaceship0 = np.array([[0, 0, 1, 1, 0],  # glider 2
                                 [1, 1, 0, 1, 1],
                                 [1, 1, 1, 1, 0],
                                 [0, 1, 1, 0, 0]])
 
-    heavy_spaceship1 = np.array([[0, 0, 0, 1, 1, 0],
+    heavy_spaceship1 = np.array([[0, 0, 0, 1, 1, 0],  # glider 3
                                 [1, 1, 1, 0, 1, 1],
                                 [1, 1, 1, 1, 1, 0],
                                 [0, 1, 1, 1, 0, 0]])
 
-    osciilator0 = np.array([[1, 1, 1]])
+    osciilator0 = np.array([[1, 1, 1]])  # осцилятор с частотой 2 тика
 
-    seed = np.array([[0, 1, 0], [1, 1, 1], [1, 0, 1], [0, 1, 0]])
+    seed = np.array([[0, 1, 0], [1, 1, 1], [1, 0, 1],
+                    [0, 1, 0]])  # создает цветок с 4 лепестками
 
     figures = [edem0, glider0, osciilator0, osciilator1,
                seed, heavy_spaceship0, heavy_spaceship1]
@@ -131,5 +131,5 @@ if __name__ == "__main__":
         finally:
             continue
 
-    # field = np.random.randint(0, high=2, size=size)
+    # запуск игры
     gg = Game(field)
